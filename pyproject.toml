@@ -1,0 +1,33 @@
+[project]
+name = "esmfold"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "biopython>=1.87",
+    "biotite>=1.6.0",
+    "click>=8.3.2",
+    "esm>=3.2.3",
+    "httpx>=0.28.1",
+]
+
+[project.scripts]
+esmfold = "esmfold.cli:main"
+
+[tool.uv.sources]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "hatchling>=1.29.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/esmfold"]
+
+[tool.uv]
+no-binary-package = ["torchtext"]
