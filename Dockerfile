@@ -1,19 +1,23 @@
-FROM pytorch/pytorch:2.9.1-cuda12.8-cudnn9-runtime
+FROM nvidia/cuda:13.1.0-runtime-ubuntu24.04 AS builder
 
+# download uv
+COPY --from=ghcr.io/astral-sh/uv:0.9.22 /uv /uvx /bin/
+ENV UV_COMPILE_BYTECODE=1
+
+# set working directory
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
-
-ENV UV_SYSTEM_PYTHON=1
-
+# copy project information
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev --no-install-package torch
 
-COPY src/ src/
-RUN uv pip install --no-deps -e .
+# Install dependencies into a standard location
+RUN uv python install 3.12 && uv sync --frozen --no-install-project --no-dev
 
-ENTRYPOINT ["esmfold"]
+# set PATH to venv
+ENV PATH="/app/.venv/bin:$PATH"
+
+# copy esmfold exec
+COPY esmfold.py /usr/local/bin/esmfold
+RUN chmod +x /usr/local/bin/esmfold
+
+
