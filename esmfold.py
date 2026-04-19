@@ -116,6 +116,8 @@ def predict_structure(
     sequence: str,
     num_steps: int,
     temperature: float,
+    schedule: str,
+    strategy: str,
 ) -> ESMProtein:
     """Run ESM3 structure generation for a single sequence."""
     result = model.generate(
@@ -124,6 +126,8 @@ def predict_structure(
             track="structure",
             num_steps=num_steps,
             temperature=temperature,
+            schedule=schedule,
+            strategy=strategy,
         ),
     )
     if isinstance(result, ESMProteinError):
@@ -152,16 +156,30 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--num-steps", "-n",
         type=int,
-        default=8,
+        default=1,
         metavar="N",
-        help="Structure generation steps (default: 8).",
+        help="Structure generation steps (default: 1).",
     )
     parser.add_argument(
         "--temperature", "-t",
         type=float,
-        default=0.7,
+        default=0.0,
         metavar="T",
-        help="Sampling temperature (default: 0.7).",
+        help="Sampling temperature (default: 0.0).",
+    )
+    parser.add_argument(
+        "--schedule", "-s",
+        type=str,
+        default="cosine",
+        metavar="SCHEDULE",
+        help="Noise schedule for structure generation, e.g. cosine, linear (default: cosine).",
+    )
+    parser.add_argument(
+        "--strategy",
+        type=str,
+        default="entropy",
+        metavar="STRATEGY",
+        help="Decoding strategy, e.g. entropy, random (default: entropy).",
     )
     return parser.parse_args(argv)
 
@@ -195,9 +213,11 @@ def main(argv: list[str] | None = None) -> None:
         sys.exit(1)
 
     log.info(
-        "Starting predictions (steps=%d, temperature=%.2f)...",
+        "Starting predictions (steps=%d, temperature=%.2f, schedule=%s, strategy=%s)...",
         args.num_steps,
         args.temperature,
+        args.schedule,
+        args.strategy,
     )
 
     start_time = datetime.now(timezone.utc)
@@ -213,7 +233,8 @@ def main(argv: list[str] | None = None) -> None:
 
             log.info("  Running structure prediction...")
             protein = predict_structure(
-                model, sequence, args.num_steps, args.temperature
+                model, sequence, args.num_steps, args.temperature,
+                args.schedule, args.strategy,
             )
             protein.to_pdb(str(out_path))
             log.info("  -> %s", out_path)
@@ -238,6 +259,11 @@ def main(argv: list[str] | None = None) -> None:
             "start_time": start_time.isoformat(),
             "end_time": end_time.isoformat(),
             "gpu": gpu_name,
+            "fasta_file": str(args.fasta_file),
+            "num_steps": args.num_steps,
+            "temperature": args.temperature,
+            "schedule": args.schedule,
+            "strategy": args.strategy,
             "failed_sequences": failed,
         },
         indent=2,

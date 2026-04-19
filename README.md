@@ -1,5 +1,7 @@
 # esmfold
 
+[![Docker Image](https://img.shields.io/github/v/release/stracquadaniolab/esmfold?logo=docker&label=ghcr.io)](https://github.com/stracquadaniolab/esmfold/pkgs/container/esmfold)
+
 Predict protein 3D structures from amino acid sequences using
 [ESM3](https://github.com/evolutionaryscale/esm). For each sequence the script
 writes a PDB file, and produces two summary files:
@@ -38,13 +40,15 @@ python esmfold.py <fasta_file> [options]
 |---|---|
 | `fasta_file` | Input FASTA file (required) |
 | `-o`, `--output-dir DIR` | Directory for output files (default: `.`) |
-| `-n`, `--num-steps N` | Structure generation steps (default: `8`) |
-| `-t`, `--temperature T` | Sampling temperature (default: `0.7`) |
+| `-n`, `--num-steps N` | Structure generation steps (default: `1`) |
+| `-t`, `--temperature T` | Sampling temperature (default: `0.0`) |
+| `-s`, `--schedule SCHEDULE` | Noise schedule, e.g. `cosine`, `linear` (default: `cosine`) |
+| `--strategy STRATEGY` | Decoding strategy, e.g. `entropy`, `random` (default: `entropy`) |
 
 ### Example
 
 ```bash
-python esmfold.py sequences.fasta -o results/ --num-steps 8 --temperature 0.7
+python esmfold.py sequences.fasta -o results/ --num-steps 1 --temperature 0.0 --schedule cosine --strategy entropy
 ```
 
 This produces:
@@ -76,6 +80,10 @@ results/
   "start_time": "2026-04-16T10:23:01+00:00",
   "end_time": "2026-04-16T10:25:44+00:00",
   "gpu": "NVIDIA A100 80GB PCIe",
+  "num_steps": 1,
+  "temperature": 0.0,
+  "schedule": "cosine",
+  "strategy": "entropy",
   "failed_sequences": []
 }
 ```
